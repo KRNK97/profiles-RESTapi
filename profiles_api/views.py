@@ -6,6 +6,8 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework import filters
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.settings import api_settings
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
+
 
 from profiles_api import serializers
 from profiles_api import models
@@ -102,8 +104,11 @@ class UserProfileViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.UserProfileSerializer
     # queryset is needed to tell which objects to use
     queryset = models.UserProfile.objects.all()
+    # the authentication to use
     authentication_classes = (TokenAuthentication,)
+    # permissions
     permission_classes = (permissions.UpdateOwnProfile,)
+    # add a search by name and email filter
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name', 'email',)
 
@@ -112,3 +117,17 @@ class UserLoginApiView(ObtainAuthToken):
     """Handle creating user auth tokens"""
     # add a default view for browser
     renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES
+    # this view will give us an auth token to add to headers as authorization
+
+
+class UserProfileFeedViewSet(viewsets.ModelViewSet):
+    authentication_classes = (TokenAuthentication,)
+    serializer_class = serializers.ProfileFeedItemSerializer
+    queryset = models.ProfileFeedItem.objects.all()
+    permission_classes = (permissions.UpdateOwnStatus, IsAuthenticated,)
+
+    def perform_create(self, serializer):
+        """sets user profile to logged in user"""
+        # serializer is a model serializer so it has a save function to add the item
+        # we can override it and use perform_create to add custom values
+        serializer.save(user_profile=self.request.user)
