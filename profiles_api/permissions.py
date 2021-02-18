@@ -10,7 +10,8 @@ class UpdateOwnProfile(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
         else:
-            if request.user.id == obj.id:   # if it is same user then true
+            # after auth login, we will get loggedin user with the request
+            if request.user.id == obj.id:   # if it is same as object user then true and let them edit
                 return True
             else:
                 return False
